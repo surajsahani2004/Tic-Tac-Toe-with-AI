@@ -1,34 +1,42 @@
-# Tic-Tac-Toe-with-AI
-This is a classic Tic-Tac-Toe game. I built this to practice Game Logic and AI decision-making. The computer is programmed to play smartly—it will try to win, block your moves, and take the best positions on the board.
+🎮 X_&_O_with_Bot (Web Edition)
+This is a modern, web-based Tic-Tac-Toe game where you play against a smart AI bot. I upgraded this project from a terminal-based script to a full web application to practice AI decision-making and Full-stack development.
 
 ✨ Features
-Smart Computer: It blocks your winning moves and plays strategically.
+Smart AI Opponent: The computer is programmed to play strategically. It will block your winning moves and try to win whenever possible.
 
-Error Handling: Prevents invalid inputs (like typing letters or picking occupied spots).
+Unpredictable Gameplay: Unlike basic bots, this AI uses a shuffle logic to ensure it doesn't play the exact same pattern every time, making the game more challenging.
 
-Play Again: Ask if you want a rematch after the game ends.
+Win Celebration: When you beat the bot, the screen celebrates with a colorful confetti 🎉 animation.
 
-Clean Code: Easy to read and understand.
+Clean Web UI: A professional 3x3 grid layout with a responsive "New Game" feature.
 
-🛠️ Tech Used
-Language: Python 3.13
+Error Prevention: The interface automatically disables occupied spots, so there are no invalid moves.
 
-Libraries: random (Standard library)
+🛠️ Tech Stack
+Backend: Python 3.13 (Flask Framework)
+
+Frontend: HTML5, CSS3 (Modern Dashboard UI)
+
+Logic: Heuristic AI & Randomization
+
+Libraries: Flask, Random, Canvas-Confetti
 
 🚀 How to Run
-Download the Tic Tac Toe Game.py file.
-
-Open your terminal or command prompt.
-
-Run the command:
+Install Flask:
 
 Bash
-python "Tic Tac Toe Game.py"
+pip install flask
+Run the App:
+
+Bash
+python "X_and_O_with_Bot.py"
+Open in Browser: Go to http://127.0.0.1:5000/ to start playing!
+
 🎮 How to Play
-The board has positions 1 to 9.
+The board consists of 9 cells (1-9).
 
 You are 'X' and the computer is 'O'.
 
-Enter a number from 1-9 to place your mark.
+Click on any empty square to place your mark. The computer will immediately respond with its best move.
 
-Developer: Suraj Sahani College: Mumbai University (B.Sc Computer Science)
+Developer: Suraj Sahani College: Mumbai University (B.Sc. Computer Science) Focus: AI/ML Research & Innovation
