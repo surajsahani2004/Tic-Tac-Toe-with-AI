@@ -1,133 +1,127 @@
-6# Tic Tac Toe Game (Player X vs Computer O)
+# Tic Tac Toe Game (Player X vs Computer O)
 
-board = [' ' for _ in range(10)]  # index 0 unused
+from flask import Flask, render_template_string, request, jsonify
+import random
 
-def insertBoard(letter, pos):
-    global board
-    board[pos] = letter
+app = Flask(__name__)
+app.secret_key = "suraj_sahani_tictactoe"
 
-def spaceIsFree(pos):
-    return board[pos] == ' '
+# Initial Game State
+def reset_board():
+    return [' ' for _ in range(10)]
+
+board = reset_board()
 
 def isWinner(bo, le):
-    # Returns True if player with letter le has won on board bo
+    # Standard Tic-Tac-Toe winning combinations
     return (
-        (bo[7] == le and bo[8] == le and bo[9] == le) or  # top row
-        (bo[4] == le and bo[5] == le and bo[6] == le) or  # middle row
-        (bo[1] == le and bo[2] == le and bo[3] == le) or  # bottom row
-        (bo[7] == le and bo[4] == le and bo[1] == le) or  # left col
-        (bo[8] == le and bo[5] == le and bo[2] == le) or  # middle col
-        (bo[9] == le and bo[6] == le and bo[3] == le) or  # right col
-        (bo[7] == le and bo[5] == le and bo[3] == le) or  # diag
-        (bo[9] == le and bo[5] == le and bo[1] == le)     # diag
+        (bo[7] == le and bo[8] == le and bo[9] == le) or
+        (bo[4] == le and bo[5] == le and bo[6] == le) or
+        (bo[1] == le and bo[2] == le and bo[3] == le) or
+        (bo[7] == le and bo[4] == le and bo[1] == le) or
+        (bo[8] == le and bo[5] == le and bo[2] == le) or
+        (bo[9] == le and bo[6] == le and bo[3] == le) or
+        (bo[7] == le and bo[5] == le and bo[3] == le) or
+        (bo[9] == le and bo[5] == le and bo[1] == le)
     )
 
-def playerMove():
-    while True:
-        move = input("Please select a position to place an 'X' (1-9): ")
-        try:
-            move = int(move)
-            if 1 <= move <= 9:
-                if spaceIsFree(move):
-                    insertBoard('X', move)
-                    return
-                else:
-                    print('This position is already occupied!')
-            else:
-                print('Please type a number within the range 1-9!')
-        except ValueError:
-            print('Please type a valid number!')
-
-def selectRandom(li):
-    import random
-    return li[random.randrange(0, len(li))]
-
 def compMove():
-    # All free positions (ignore index 0)
     possibleMoves = [i for i, letter in enumerate(board) if letter == ' ' and i != 0]
-    if not possibleMoves:
-        return 0
+    if not possibleMoves: return 0
 
-    # Win or block
+    # 1. Win or Block logic
     for let in ['O', 'X']:
         for i in possibleMoves:
             boardCopy = board[:]
             boardCopy[i] = let
-            if isWinner(boardCopy, let):
-                return i
+            if isWinner(boardCopy, let): return i
 
-    # Take a corner
-    cornersOpen = [i for i in possibleMoves if i in [1, 3, 7, 9]]
-    if cornersOpen:
-        return selectRandom(cornersOpen)
+    # 2. Add Randomness (Shuffle) so it's not predictable
+    random.shuffle(possibleMoves)
+    
+    # 3. Smart preferences (Center > Corners > Edges) with slight randomness
+    if 5 in possibleMoves and random.random() > 0.2: return 5
+    
+    corners = [i for i in possibleMoves if i in [1, 3, 7, 9]]
+    if corners: return random.choice(corners)
+    
+    return possibleMoves[0]
 
-    # Take center
-    if 5 in possibleMoves:
-        return 5
+@app.route("/")
+def index():
+    cells = ""
+    for i in range(1, 10):
+        val = board[i]
+        disabled = "disabled" if val != ' ' else ""
+        color = "#007bff" if val == 'X' else "#dc3545"
+        cells += f'<button class="cell" style="color: {color}" onclick="makeMove({i})" {disabled}>{val}</button>'
+    
+    return render_template_string(HTML_TEMPLATE, cells=cells)
 
-    # Take an edge
-    edgesOpen = [i for i in possibleMoves if i in [2, 4, 6, 8]]
-    if edgesOpen:
-        return selectRandom(edgesOpen)
+@app.route("/move/<int:pos>")
+def move(pos):
+    global board
+    if board[pos] == ' ':
+        board[pos] = 'X'
+        if isWinner(board, 'X'): return jsonify({"status": "win", "msg": "🎉 You Won, Suraj! 🎉"})
+        
+        if board.count(' ') <= 1: return jsonify({"status": "draw", "msg": "It's a Tie!"})
 
-    return 0
+        c_move = compMove()
+        if c_move != 0:
+            board[c_move] = 'O'
+            if isWinner(board, 'O'): return jsonify({"status": "loss", "msg": "Computer Wins! Better luck next time."})
+        
+        return jsonify({"status": "continue"})
+    return jsonify({"status": "error"})
 
-def isBoardFull(b):
-    # index 0 is unused, so more than 1 space means moves remain
-    return not (b.count(' ') > 1)
+@app.route("/reset")
+def reset():
+    global board
+    board = reset_board()
+    return "<script>window.location.href='/';</script>"
 
-def printBoard():
-    print('   |   |')
-    print(' ' + board[1] + ' | ' + board[2] + ' | ' + board[3])
-    print('   |   |')
-    print('-----------')
-    print('   |   |')
-    print(' ' + board[4] + ' | ' + board[5] + ' | ' + board[6])
-    print('   |   |')
-    print('-----------')
-    print('   |   |')
-    print(' ' + board[7] + ' | ' + board[8] + ' | ' + board[9])
-    print('   |   |')
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>X & O with Bot</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .game-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; margin: 20px 0; }
+        .cell { width: 100px; height: 100px; font-size: 2.5em; font-weight: bold; cursor: pointer; border: 2px solid #eee; background: #fff; border-radius: 12px; transition: 0.2s; }
+        .cell:hover:not(:disabled) { border-color: #007bff; background: #f0f7ff; }
+        .reset-btn { padding: 12px 30px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="game-card">
+        <h2>🎮 X & O with Bot</h2>
+        <div class="grid">{{cells|safe}}</div>
+        <button class="reset-btn" onclick="location.href='/reset'">New Game</button>
+    </div>
+    <script>
+        function celebrate() {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+        function makeMove(pos) {
+            fetch('/move/' + pos).then(r => r.json()).then(data => {
+                if (data.status === "win") {
+                    celebrate();
+                    setTimeout(() => { alert(data.msg); location.reload(); }, 500);
+                } else if (data.status === "loss" || data.status === "draw") {
+                    setTimeout(() => { alert(data.msg); location.reload(); }, 100);
+                } else {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+"""
 
-def main():
-    print("Welcome to Tic Tac Toe!")
-    print("To win, complete a straight line (diagonal, horizontal, or vertical).")
-    print("Board positions are 1-9, starting at the top-left.")
-    printBoard()
-
-    while not isBoardFull(board):
-        if not isWinner(board, 'O'):
-            playerMove()
-            printBoard()
-        else:
-            print("O's win this time...")
-            break
-
-        if not isWinner(board, 'X'):
-            move = compMove()
-            if move == 0:
-                print('Game is a tie! No more spaces left to move.')
-                break
-            insertBoard('O', move)
-            print(f"Computer placed an 'O' in position {move}:")
-            printBoard()
-        else:
-            print("X's win, good job!")
-            break
-
-    if isBoardFull(board) and not isWinner(board, 'X') and not isWinner(board, 'O'):
-        print('Game is a tie! No more spaces left to move.')
-
-# Run and replay loop
 if __name__ == "__main__":
-    main()
-    while True:
-        answer = input('Do you want to play again? (Y/N): ').strip().lower()
-        if answer in ('y', 'yes'):
-            board = [' ' for _ in range(10)]
-            print('-----------------------------------')
-            main()
-        else:
-            print('Thanks for playing!')
-            break
-2
+    app.run(debug=True)
